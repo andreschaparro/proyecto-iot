@@ -1,6 +1,6 @@
 services:
   mongo:
-    # Última versión compatible con Raspberry Pi 3B+
+    # Última versión compatible con Raspberry Pi 3B+ https://hub.docker.com/_/mongo/
     image: mongo:4.4.18
     restart: always
     environment:
