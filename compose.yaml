@@ -1,8 +1,7 @@
 services:
   mongo:
+    # Última versión compatible con Raspberry Pi 3B+
     image: mongo:4.4.18
-    hostname: mongo
-    container_name: mongo
     restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
