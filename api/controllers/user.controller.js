@@ -5,21 +5,12 @@ import jwt from "jsonwebtoken"
 
 export const register = async (req, res) => {
     try {
-        const { name, email, password, rol, admin } = req.body
+        const { name, email, password, rol } = req.body
 
         // Verifica que todos los campos del body existan
-        if (!name || !email || !password || !rol || !admin) {
+        if (!name || !email || !password || !rol) {
             return res.status(400).json({
-                message: "Los campos name, email, password, rol y admin son obligatorios"
-            })
-        }
-
-        // Verifica que el usuario admin exista y tenga el rol adecuado
-        const existingAdmin = await User.findOne({ email: admin })
-
-        if (!existingAdmin || existingAdmin.rol !== "admin") {
-            return res.status(401).json({
-                message: "El usuario admin no existe o no tiene el rol correspondiente"
+                message: "Los campos name, email, password y rol son obligatorios"
             })
         }
 
