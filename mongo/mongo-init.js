@@ -22,7 +22,7 @@ db.createCollection("iotUsuarios")
 db.iotUsuarios.insertOne({
     name: "admin",
     email: "admin@admin.com",
-    // El password "admin123" se debe encriptar en https://bcrypt-generator.com/ utilizando 10 rounds
+    // El password "admin123" se debe cifrar en https://bcrypt-generator.com/ utilizando 10 rounds
     password: "$2a$10$.1vt8F1.vVc3iv943Z1Fquy04mHG1OpHI7UAzRKNpbMKolgFGgDWK",
     rol: "admin"
 })
