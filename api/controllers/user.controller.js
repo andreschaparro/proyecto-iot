@@ -1,9 +1,7 @@
 import { User } from "../models/user.model.js"
+import { secret } from "../config/jwt.config.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-
-// TODO en producción utilizar una variable de entorno para secret
-const secret = "mysecret"
 
 export const register = async (req, res) => {
     try {
@@ -111,10 +109,13 @@ export const login = async (req, res) => {
             })
         }
 
-        // Crea un token que dura 1 día que se puede analizar en https://jwt.io/
+        // Crea un token que se puede analizar en https://jwt.io/
         const token = jwt.sign(
+            // Payload
             { _id: existingUser._id },
+            // Clave secreta
             secret,
+            // Duración de 1 día
             { expiresIn: "1d" }
         )
 

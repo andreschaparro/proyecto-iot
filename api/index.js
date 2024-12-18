@@ -1,17 +1,22 @@
 import express from "express"
 import bodyParser from "body-parser"
 import mongoose from "mongoose"
+import { config } from "dotenv"
+import { mongoUrl } from "./config/database.config.js"
 import { userRouter } from "./routes/user.route.js"
+import passport from "./config/passport.config.js"
 
-// TODO en producción utilizar variables de entorno para el puerto y mongoUrl
+// Crea las variables de entorno a partir del archivo .env
+config()
+
+// Crea la aplicación con express
 const app = express()
-const port = 3000
-const mongoUrl = "mongodb://iotuser:iot123@172.16.36.141:27017/iot"
+const port = process.env.API_PORT || 3000
 
-// Middleware para parsear los body que vienen en formato JSON
+// Middleware para parsear los body de los request que llegan en formato JSON
 app.use(bodyParser.json())
 
-// Se conecta a la base de datos
+// Conexión a la base de datos
 const connectToDatabase = async (url) => {
     try {
         await mongoose.connect(url)
@@ -23,7 +28,7 @@ const connectToDatabase = async (url) => {
 
 connectToDatabase(mongoUrl)
 
-// Declarar las rutas
+// Rutas
 app.use("/users", userRouter)
 
 // Ruta por defecto
@@ -33,7 +38,11 @@ app.use("/", (req, res) => {
     })
 })
 
-// Se escuchan requests
+// Middleware para autenticación
+app.use(passport.initialize())
+app.use(passport.session())
+
+// La aplicación queda a la espera de que lleguen requests
 app.listen(port, () => {
     console.log(`La API está funcionando en el port ${port}`)
 })
