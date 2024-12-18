@@ -1,5 +1,9 @@
 import { User } from "../models/user.model.js"
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+
+// TODO en producción utilizar una variable de entorno para secret
+const secret = "mysecret"
 
 export const register = async (req, res) => {
     try {
@@ -71,6 +75,56 @@ export const register = async (req, res) => {
             })
         }
 
+        res.status(500).json({
+            message: "Error en el servidor",
+            error: error.message
+        })
+    }
+}
+
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body
+
+        // Verifica que todos los campos del body existan
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Los campos email y password son obligatorios"
+            })
+        }
+
+        // Verifica que el usuario se encuentre registrado
+        const existingUser = await User.findOne({ email })
+
+        if (!existingUser) {
+            return res.status(401).json({
+                message: "El correo eletrónico o la contraseña son incorrectos"
+            })
+        }
+
+        // Compara el password recibido contra el que esta cifrado en la base de datos
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password)
+
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                message: "El correo eletrónico o la contraseña son incorrectos"
+            })
+        }
+
+        // Crea un token que dura 1 día que se puede analizar en https://jwt.io/
+        const token = jwt.sign(
+            { _id: existingUser._id },
+            secret,
+            { expiresIn: "1d" }
+        )
+
+        // Devuelve el token para que los requests lo incluyan en la cabecera de autenticación
+        res.json({
+            message: "Login exitoso",
+            token: `Bearer ${token}`
+        })
+
+    } catch (error) {
         res.status(500).json({
             message: "Error en el servidor",
             error: error.message
