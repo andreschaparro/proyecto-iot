@@ -1,5 +1,5 @@
 import { User } from "../models/user.model.js"
-import { generateToken, hashPassword, comparePasswords } from "../services/user.service.js"
+import { generateToken, hashPassword, comparePasswords, sendMail } from "../services/user.service.js"
 
 export const register = async (req, res) => {
     try {
@@ -94,7 +94,7 @@ export const login = async (req, res) => {
         }
 
         // Genera el token
-        const token = generateToken(existingUser._id)
+        const token = generateToken(existingUser._id, "1d")
 
         // Devuelve el token para que los requests lo incluyan en la cabecera de autenticación
         res.json({ token })
@@ -136,13 +136,14 @@ export const changePassword = async (req, res) => {
             })
         }
 
-        // Verifica la longitud mínima de la contraseña nueva
+        // Verifica la longitud mínima de la nueva contraseña
         if (newPassword.length < 8) {
             return res.status(400).json({
-                message: "La contraseña nueva debe tener al menos 8 caracteres"
+                message: "La nueva contraseña debe tener al menos 8 caracteres"
             })
         }
 
+        // Verifica que no ingrese la contraseña actual
         const matchNewPassword = await comparePasswords(newPassword, password)
 
         if (matchNewPassword) {
@@ -151,12 +152,112 @@ export const changePassword = async (req, res) => {
             })
         }
 
-        // Cifra la contraseña nueva
+        // Cifra la nueva contraseña
         const hashedPassword = await hashPassword(newPassword)
 
         // Actualiza la contraseña en la base de datos
         await User.findOneAndUpdate(
             { email },
+            { password: hashedPassword }
+        )
+
+        res.json({
+            message: "La contraseña fue actualizada"
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Error en el servidor",
+            error: error.message
+        })
+    }
+}
+
+export const forgotPassword = async (req, res) => {
+    try {
+        // Verifica que todos los campos del body existan
+        const { email } = req.body
+
+        if (!email) {
+            return res.status(400).json({
+                message: "El campo email es obligatorio"
+            })
+        }
+
+        // Verifica que el usuario se encuentre registrado
+        const existingUser = await User.findOne({ email })
+
+        if (!existingUser) {
+            return res.status(404).json({
+                message: "El correo electrónico es incorrecto"
+            })
+        }
+
+        // Genera el token
+        const token = generateToken(existingUser._id, "15m")
+
+        // Envía el correo electrónico con el token https://ethereal.email/messages
+        const message = `<p>Has olvidado tu contraseña. Para cambiarla, utiliza el siguiente token:<p>
+                        <h4>${token}<h4>`
+
+        await sendMail(email, "Reestablecer contraseña", message)
+
+        res.json({
+            message: "Se ha enviado el correo electrónico para cambiar la contraseña"
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Error en el servidor",
+            error: error.message
+        })
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        // Verifica que todos los campos del body existan
+        const { newPassword } = req.body
+
+        if (!newPassword) {
+            return res.status(400).json({
+                message: "El campo newPassword es obligatorio"
+            })
+        }
+
+        // Verifica que el usuario se encuentre registrado
+        const { _id } = req.user
+
+        const existingUser = await User.findById(_id)
+
+        if (!existingUser) {
+            return res.status(404).json({
+                message: "Usuario no encontrado"
+            })
+        }
+
+        // Verifica la longitud mínima de la nueva contraseña
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                message: "La nueva contraseña debe tener al menos 8 caracteres"
+            })
+        }
+
+        // Verifica que no ingrese la contraseña actual
+        const matchNewPassword = await comparePasswords(newPassword, existingUser.password)
+
+        if (matchNewPassword) {
+            return res.status(400).json({
+                message: "La nueva contraseña no puede ser la misma que la actual"
+            })
+        }
+
+        // Cifra la nueva contraseña
+        const hashedPassword = await hashPassword(newPassword)
+
+        // Actualiza la contraseña en la base de datos
+        await User.findByIdAndUpdate(
+            _id,
             { password: hashedPassword }
         )
 

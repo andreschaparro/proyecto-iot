@@ -31,7 +31,7 @@ const findUserByJwtPayload = async (payload, done) => {
 // Estrategia "jwt" para passport
 const strategy = new Strategy(opts, findUserByJwtPayload)
 
-// Utilizamos la estrategia anterior
+// Utilizamos la estrategia "jwt"
 passport.use(strategy)
 
 export default passport
