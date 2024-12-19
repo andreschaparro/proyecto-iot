@@ -31,8 +31,7 @@ export const checkTokenInBody = (req, res, next) => {
 
         //Agrega al request el payload del jwt
         req.user = decoded
-
-        // Pasa al siguiente middleware o controlador
+        
         next()
     })
 }

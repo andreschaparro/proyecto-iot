@@ -21,7 +21,7 @@ const connectToDatabase = async (url) => {
     }
 }
 
-connectToDatabase(mongoUrl)
+await connectToDatabase(mongoUrl)
 
 // Rutas
 app.use("/users", userRouter)

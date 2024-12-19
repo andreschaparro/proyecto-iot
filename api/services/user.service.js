@@ -7,13 +7,13 @@ import nodemailer from "nodemailer"
 const SALT_ROUNDS = 10
 
 export const generateToken = (_id, expiresIn) => {
-    // El jwt se puede analizar en https://jwt.io/
+    // https://jwt.io/
     return jwt.sign(
         // Payload
         { _id },
         // Clave secreta
         secret,
-        // Duración de 1 día
+        // Duración
         { expiresIn }
     )
 }
