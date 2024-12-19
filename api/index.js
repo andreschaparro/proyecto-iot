@@ -1,20 +1,15 @@
 import express from "express"
-import bodyParser from "body-parser"
 import mongoose from "mongoose"
-import { config } from "dotenv"
 import { mongoUrl } from "./config/database.config.js"
 import { userRouter } from "./routes/user.route.js"
 import passport from "./config/passport.config.js"
-
-// Crea las variables de entorno a partir del archivo .env
-config()
 
 // Crea la aplicación con express
 const app = express()
 const port = process.env.API_PORT || 3000
 
 // Middleware para parsear los body de los request que llegan en formato JSON
-app.use(bodyParser.json())
+app.use(express.json())
 
 // Conexión a la base de datos
 const connectToDatabase = async (url) => {

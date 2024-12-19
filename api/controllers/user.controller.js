@@ -1,7 +1,5 @@
 import { User } from "../models/user.model.js"
-import { secret } from "../config/jwt.config.js"
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
+import { generateToken, hashPassword, comparePasswords } from "../services/user.service.js"
 
 export const register = async (req, res) => {
     try {
@@ -31,7 +29,7 @@ export const register = async (req, res) => {
         }
 
         // Cifra la contraseña
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const hashedPassword = await hashPassword(password)
 
         // Registra el usuario
         const newUser = new User({
@@ -41,15 +39,10 @@ export const register = async (req, res) => {
             rol
         })
 
-        const savedUser = await newUser.save()
+        await newUser.save()
 
         res.status(201).json({
-            message: "El usuario fue registrado",
-            user: {
-                name: savedUser.name,
-                email: savedUser.email,
-                rol: savedUser.rol
-            }
+            message: "El usuario fue registrado"
         })
 
     } catch (error) {
@@ -92,28 +85,83 @@ export const login = async (req, res) => {
         }
 
         // Compara el password recibido contra el que esta cifrado en la base de datos
-        const isPasswordValid = await bcrypt.compare(password, existingUser.password)
+        const match = await comparePasswords(password, existingUser.password)
 
-        if (!isPasswordValid) {
+        if (!match) {
             return res.status(401).json({
                 message: "El correo eletrónico o la contraseña son incorrectos"
             })
         }
 
-        // Crea un token que se puede analizar en https://jwt.io/
-        const token = jwt.sign(
-            // Payload
-            { _id: existingUser._id },
-            // Clave secreta
-            secret,
-            // Duración de 1 día
-            { expiresIn: "1d" }
-        )
+        // Genera el token
+        const token = generateToken(existingUser._id)
 
         // Devuelve el token para que los requests lo incluyan en la cabecera de autenticación
+        res.json({ token })
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Error en el servidor",
+            error: error.message
+        })
+    }
+}
+
+export const profile = (req, res) => {
+    // Devulve los datos del usuario que pasó por el proceso de autenticación con jwt
+    const { name, email, rol } = req.user
+
+    res.json({ name, email, rol })
+}
+
+export const changePassword = async (req, res) => {
+    try {
+        // Verifica que todos los campos del body existan
+        const { oldPassword, newPassword } = req.body
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({
+                message: "Los campos oldPassword y newPassword son obligatorios"
+            })
+        }
+
+        // Obtiene los datos del usuario autenticado
+        const { email, password } = req.user
+
+        const matchOldPassword = await comparePasswords(oldPassword, password)
+
+        if (!matchOldPassword) {
+            return res.status(401).json({
+                message: "La contraseña vieja es incorrecta"
+            })
+        }
+
+        // Verifica la longitud mínima de la contraseña nueva
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                message: "La contraseña nueva debe tener al menos 8 caracteres"
+            })
+        }
+
+        const matchNewPassword = await comparePasswords(newPassword, password)
+
+        if (matchNewPassword) {
+            return res.status(400).json({
+                message: "La nueva contraseña no puede ser la misma que la actual"
+            })
+        }
+
+        // Cifra la contraseña nueva
+        const hashedPassword = await hashPassword(newPassword)
+
+        // Actualiza la contraseña en la base de datos
+        await User.findOneAndUpdate(
+            { email },
+            { password: hashedPassword }
+        )
+
         res.json({
-            message: "Login exitoso",
-            token: `Bearer ${token}`
+            message: "La contraseña fue actualizada"
         })
 
     } catch (error) {
