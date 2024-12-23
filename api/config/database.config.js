@@ -1,5 +1,7 @@
-const username = process.env.MONGO_USERNAME || "iotuser"
-const password = process.env.MONGO_PASSWORD || "iot123"
-const database = process.env.MONGO_DATABASE || "iot"
+const {
+    MONGO_USERNAME = "iotuser",
+    MONGO_PASSWORD = "iot123",
+    MONGO_DATABASE = "iot"
+} = process.env
 
-export const mongoUrl = `mongodb://${username}:${password}@localhost:27017/${database}`
+export const mongoUrl = `mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@localhost:27017/${MONGO_DATABASE}`

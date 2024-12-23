@@ -1,3 +1,5 @@
 // https://ethereal.email/create
-export const user = process.env.EMAIL_USER || "cydney89@ethereal.email"
-export const pass = process.env.EMAIL_PASS || "G5uVzBsymxpMatfrDT"
+export const {
+    EMAIL_USER = "cydney89@ethereal.email",
+    EMAIL_PASS = "G5uVzBsymxpMatfrDT"
+} = process.env

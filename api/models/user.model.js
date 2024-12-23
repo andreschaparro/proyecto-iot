@@ -1,7 +1,12 @@
-import mongoose from "mongoose"
-import validator from "validator"
+import { Schema, model } from "mongoose"
 
-const userSchema = mongoose.Schema({
+// Válida el campo email utilizando Regex
+const emailValidator = (value) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailPattern.test(value)
+}
+
+const userSchema = Schema({
     name: {
         type: String,
         required: true,
@@ -13,7 +18,7 @@ const userSchema = mongoose.Schema({
         unique: true,
         lowercase: true,
         validate: {
-            validator: validator.isEmail,
+            validator: emailValidator,
             message: "El email es inválido"
         }
     },
@@ -31,4 +36,4 @@ const userSchema = mongoose.Schema({
     }
 })
 
-export const User = mongoose.model("User", userSchema, "iotUsuarios")
+export const User = model("User", userSchema, "iotUsuarios")
